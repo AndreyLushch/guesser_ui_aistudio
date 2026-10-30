@@ -1,11 +1,156 @@
-<div align="center">
+# Угадайка (Party Word Game) — Telegram Mini App UI Prototype
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Интерактивный прототип интерфейса партийной игры «Угадайка» (семейство Alias / «Крокодил») для Telegram Mini App для компании от 2 до 30 человек в одной комнате без ведущего.
 
-  <h1>Built with AI Studio</h2>
+Репозиторий: `AndreyLushch/guesser_ui_aistudio`
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+---
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## 1. Быстрый старт
 
-</div>
+```bash
+# Установка зависимостей
+npm install
+
+# Запуск локального dev-сервера (порт 3000)
+npm run dev
+
+# Проверка сборки TypeScript и Vite
+npm run build
+```
+
+---
+
+## 2. Архитектура приложения
+
+Все экраны являются чистыми функциями от объекта представления `GuesserPlayerView` и отправляют команды `GuesserCommand` через `GameAdapter`:
+
+```ts
+export interface GameAdapter {
+  getView(): GuesserPlayerView;
+  subscribe(cb: (view: GuesserPlayerView) => void): () => void;
+  send(cmd: GuesserCommand): void;
+}
+```
+
+Никакого состояния игры в компонентах экранов не хранится. Экраны не вычисляют таймеры и не решают исход раундов самостоятельно — всё состояние и переходы диктуются сервером / `MockAdapter`.
+
+---
+
+## 3. Карта экранов (Screen Architecture Matrix)
+
+| Фаза (`phase`) | Точка зрения (`perspective`) | Компонент | Что видит и делает |
+|---|---|---|---|
+| `lobby` | Ведущий (`me.isHost`) | `LobbyScreen.tsx` | Настройка режима («Один шаг» / «Спринт»), очков («Мягкий» / «Жёсткий»), кругов (1–10), слов (10–100), числа команд (2…`maxTeams`), «Перемешать», «Начать игру» |
+| `lobby` | Игрок / Гость | `LobbyScreen.tsx` | Настройки в режиме только чтения, список команд, плашка «Ждём, пока ведущий начнёт» |
+| `seating` | Ведущий (`me.isHost`) | `SeatingScreen.tsx` | Карточки рассадки по командам цветами, кнопка «Все на местах — начинаем» |
+| `seating` | Игрок / Гость | `SeatingScreen.tsx` | Своя команда, подсказка места за столом, ожидание готовности |
+| `waiting_turn` | Объясняющий (`me.isCurrentSpeaker`) | `WaitingTurnScreen.tsx` | «Ты объясняешь! Когда команда готова — нажми», крупная кнопка «Показать слово» |
+| `waiting_turn` | Своя команда | `WaitingTurnScreen.tsx` | «Ход вашей команды! Угадывайте вслух» |
+| `waiting_turn` | Чужая команда | `WaitingTurnScreen.tsx` | «Ход [Команды] — слушайте и следите за честностью» |
+| `active_turn` | Объясняющий (Один шаг) | `ActiveTurnScreen.tsx` | Слово очень крупно, таймер слова (20 с), кнопки «Угадали» и «Пропустить» |
+| `active_turn` | Объясняющий (Спринт) | `ActiveTurnScreen.tsx` | Поток слов, таймер спринта (60 с), «Угадали» / «Пропустить», «Закончить ход», плашка `SpeakerClaimBadge` |
+| `active_turn` | Объясняющий (Solo, 3 игрока) | `ActiveTurnScreen.tsx` | После «Угадали» модальное окно выбора: «Кто угадал слово?» с именами игроков |
+| `active_turn` | Слушатель (сокомандник / соперник) | `ActiveTurnScreen.tsx` | **Слово строго скрыто**; видно кто объясняет, пульсация хода и таймер |
+| `dispute_window` | Все игроки | `DisputeWindowScreen.tsx` | «[Команда] угадали: [СЛОВО]», 5 с отсчёт, кнопка «Отмена» (в pair без голосования) |
+| `voting` | Все игроки | `VotingScreen.tsx` | «Засчитать слово [СЛОВО] команде [Команда]?», таймер (12 с), «Да» / «Нет», счёт голосов |
+| `voteResult` | Поверх любого экрана | `VoteResultBanner.tsx` | Всплывающий баннер на 3 с: «Слово засчитано» / «Слово не засчитано» / «Ничья — засчитано» |
+| `finished` | Ведущий (`me.isHost`) | `FinishedScreen.tsx` | Подиум, короны победителям, обработка ничьей, «Играть ещё раз», «Выбрать другую игру» |
+| `finished` | Игроки | `FinishedScreen.tsx` | Праздничные поздравления, итоговые баллы, «Ведущий выбирает, что дальше...» |
+
+---
+
+## 4. Каталог фикстур (21 сценарий тестирования)
+
+Встроены в `src/fixtures/index.ts` и переключаются в DevPanel или Screen Architecture Guide:
+
+1. `lobby-host` — Лобби глазами ведущего
+2. `lobby-guest` — Лобби глазами обычного участника
+3. `seating-host` — Рассадка команд, подтверждение рассадки
+4. `waiting-turn-speaker` — Ожидание хода, объясняющий видит «Показать слово»
+5. `waiting-turn-teammate` — Ожидание хода глазами угадывающего сокомандника
+6. `waiting-turn-opponent` — Ожидание хода глазами соперника
+7. `active-turn-speaker-step` — Активный ход в режиме «Один шаг» (20 с)
+8. `active-turn-speaker-sprint-claim` — Активный ход в «Спринте» с плашкой `speakerClaim`
+9. `active-turn-listener` — Активный ход глазами слушателя (**слово скрыто**)
+10. `dispute-window` — Окно отмены (5 секунд)
+11. `voting-community` — Общее голосование за отмену слова (12 секунд)
+12. `vote-result-banner` — 3-секундный всплывающий баннер итога голосования
+13. `finished-podium` — Финал партии с подиумом мест
+14. `format-solo` — Формат 3 игрока «Каждый сам за себя» с выбором угадавшего
+15. `format-pair` — Формат 2 игрока «Вдвоём» (кооператив)
+16. `edge-30-players` — 30 игроков (6 команд по 5 человек)
+17. `edge-long-word` — Длинное составное слово «ДОСТОПРИМЕЧАТЕЛЬНОСТЬ»
+18. `edge-tie-podium` — Ничья на 1-м месте (две команды делят корону)
+19. `edge-offline-players` — Игроки и целая команда «не в сети»
+20. `edge-last-seconds` — Последние 4 секунды таймера (красный цвет, вибрация)
+21. `edge-unbalanced-lobby` — Несбалансированные команды в лобби
+
+---
+
+## 5. Токены темы и цвета команд
+
+Фиксированные серверные цвета команд (`src/theme/tokens.ts`):
+
+- **Красные**: `#EF4444`
+- **Синие**: `#3B82F6`
+- **Зелёные**: `#22C55E`
+- **Жёлтые**: `#EAB308`
+- **Фиолетовые**: `#A855F7`
+- **Оранжевые**: `#F97316`
+- **Вдвоём (формат pair)**: `#06B6D4`
+
+### Типографика и элементы:
+- Основной шрифт: `Inter` / `Plus Jakarta Sans`, системные шрифты `-apple-system, BlinkMacSystemFont`.
+- Контраст: текстовые цвета автоматически адаптируются под фон плашек.
+- Размер шрифта: не мельче 13 px (за исключением второстепенных меток времени 10–11 px).
+- Кнопки: зоны нажатия от 48 px до 56 px под большой палец.
+- Безопасные зоны: учет `env(safe-area-inset-top)` и `env(safe-area-inset-bottom)`.
+
+---
+
+## 6. Заглушки иллюстраций
+
+В прототипе для ключевых эмоциональных сцен зарезервированы места с иконками и композициями:
+1. **Сцена лобби**: блок приветствия со звёздами и кубком.
+2. **Сцена «Твой ход» / «Показать слово»**: фоновая аура командного цвета, иконка микрофона и глаза.
+3. **Сцена победы**: золотая корона победителей, анимированные частицы конфетти.
+4. **Сцена ничьей**: весы правосудия и двойная корона.
+
+---
+
+## 7. Предложения сверх контракта (Раздел 9 ТЗ)
+
+| № | Предложение | Обоснование | Необходимые поля в виде (`GuesserPlayerView`) | Необходимые команды (`GuesserCommand`) |
+|---|---|---|---|---|
+| 1 | **Экран «Итог хода»** (Turn Recap) | В спринте игрок успевает объяснить 3–8 слов. Команде важно видеть список слов хода с бейджами (угадано / пропуск / отменено) и «+N очков» | `turnSummary?: { words: Array<{ text: string; status: 'guessed' \| 'skipped' \| 'disputed' }>; scoreDelta: number; nextTeamName: string }` | `ACK_TURN_SUMMARY` (или автозакрытие через 6 с) |
+| 2 | **Челленджи и сложность слов** | Слова с градацией очков (1, 2, 3) или спец-условиями («объяснять только глаголами», «без рук», «спиной к столу») | `currentTask?: { id: string; text: string; difficulty?: 1 \| 2 \| 3; challengeText?: string; bonusPoints?: number }` | — (приходит от сервера) |
+| 3 | **Выбор темы колоды** | Возможность играть тематическими наборами («Кино и сериалы», «ИТ и мемы», «18+», «Для всей семьи») | `availableDecks?: Array<{ id: string; name: string; count: number }>; selectedDeckId?: string` | `SELECT_DECK: { deckId: string }` в лобби |
+| 4 | **Досрочное завершение ведущим** | Если компании нужно разойтись, ведущий может подвести финальный итог без сбоя | `canEndGameEarly?: boolean` (только у `isHost`) | `END_GAME_EARLY: {}` |
+| 5 | **Звуковые эффекты партии** | Синтезированные щелчки таймера в опасной зоне, гонг смены хода и звон победы | Не требует изменений контракта (настройка на клиенте) | — |
+
+---
+
+## 8. Использованные `data-testid`
+
+- Фазы:
+  - `guesser-phase-lobby`
+  - `guesser-phase-seating`
+  - `guesser-phase-waiting_turn`
+  - `guesser-phase-active_turn`
+  - `guesser-phase-dispute_window`
+  - `guesser-phase-voting`
+  - `guesser-phase-finished`
+- Элементы и действия:
+  - `guesser-scoreboard`
+  - `guesser-timer`
+  - `guesser-start-game`
+  - `guesser-begin-play`
+  - `guesser-show-task`
+  - `guesser-mark-guessed`
+  - `guesser-skip-task`
+  - `guesser-raise-dispute`
+  - `guesser-vote-yes`
+  - `guesser-vote-no`
+  - `guesser-next-turn`
+  - `guesser-play-again`
