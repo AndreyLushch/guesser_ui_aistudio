@@ -22,30 +22,50 @@ export const TEAM_NAMES = [
   'Оранжевые',
 ] as const;
 
-export const TEAM_PALETTE: Array<{ name: string; color: string; id: string }> = [
-  { id: 'team-red', name: 'Красные', color: '#EF4444' },
-  { id: 'team-blue', name: 'Синие', color: '#3B82F6' },
-  { id: 'team-green', name: 'Зелёные', color: '#22C55E' },
-  { id: 'team-yellow', name: 'Жёлтые', color: '#EAB308' },
-  { id: 'team-purple', name: 'Фиолетовые', color: '#A855F7' },
-  { id: 'team-orange', name: 'Оранжевые', color: '#F97316' },
+export const TEAM_PALETTE: Array<{ name: string; color: string; id: string; contrastText: string }> = [
+  { id: 'team-red', name: 'Красные', color: '#EF4444', contrastText: '#FFFFFF' },
+  { id: 'team-blue', name: 'Синие', color: '#3B82F6', contrastText: '#FFFFFF' },
+  { id: 'team-green', name: 'Зелёные', color: '#22C55E', contrastText: '#FFFFFF' },
+  { id: 'team-yellow', name: 'Жёлтые', color: '#EAB308', contrastText: '#18181B' },
+  { id: 'team-purple', name: 'Фиолетовые', color: '#A855F7', contrastText: '#FFFFFF' },
+  { id: 'team-orange', name: 'Оранжевые', color: '#F97316', contrastText: '#FFFFFF' },
 ];
 
 export const PAIR_TEAM = {
   id: 'team-pair',
   name: 'Вдвоём',
   color: '#06B6D4',
+  contrastText: '#FFFFFF',
 };
 
+export type VisualStyle = 'fiesta' | 'arcade' | 'glass';
+
 /**
- * Returns color opacity or solid with contrast considerations.
+ * Returns solid background gradient and contrast styles for the active team
+ * ensuring the screen is completely flooded with the team's vibrant color (Requirement 2).
  */
-export function getTeamBadgeStyles(colorHex: string, isLightMode = false) {
+export function getActiveTeamFullBackground(colorHex?: string, isLightMode = false) {
+  if (!colorHex) {
+    return isLightMode
+      ? { background: '#F8FAFC', text: '#0F172A', isDarkBackground: false }
+      : { background: '#0F172A', text: '#FFFFFF', isDarkBackground: true };
+  }
+
+  // Yellow needs dark text for perfect contrast
+  const isYellow = colorHex.toLowerCase() === '#eab308' || colorHex.toLowerCase() === '#eab308';
+  const contrastText = isYellow ? '#18181B' : '#FFFFFF';
+
   return {
-    borderColor: colorHex,
-    backgroundColor: isLightMode ? `${colorHex}15` : `${colorHex}22`,
-    color: isLightMode && colorHex === '#EAB308' ? '#854D0E' : isLightMode ? colorHex : '#F3F4F6',
+    background: colorHex,
+    color: contrastText,
+    isDarkBackground: !isYellow,
   };
 }
 
-export const THEME_STORAGE_KEY = 'guesser_theme_mode';
+export function getTeamBadgeStyles(colorHex: string, isLightMode = false) {
+  return {
+    borderColor: colorHex,
+    backgroundColor: isLightMode ? `${colorHex}22` : `${colorHex}35`,
+    color: isLightMode && colorHex === '#EAB308' ? '#713F12' : isLightMode ? '#0F172A' : '#FFFFFF',
+  };
+}

@@ -9,6 +9,7 @@ import { X, Lightbulb, ListChecks, Flame, Sparkles, StopCircle, Volume2 } from '
 interface ProposalsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isLightMode?: boolean;
 }
 
 export const PROPOSALS = [
@@ -64,30 +65,38 @@ export const PROPOSALS = [
   },
 ];
 
-export const ProposalsModal: React.FC<ProposalsModalProps> = ({ isOpen, onClose }) => {
+export const ProposalsModal: React.FC<ProposalsModalProps> = ({ isOpen, onClose, isLightMode = false }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="w-full max-w-xl max-h-[88vh] bg-neutral-900 border border-neutral-800 rounded-3xl p-5 sm:p-6 overflow-y-auto shadow-2xl flex flex-col space-y-4 text-neutral-100"
+        className={`w-full max-w-xl max-h-[88vh] rounded-3xl p-5 sm:p-6 overflow-y-auto shadow-2xl flex flex-col space-y-4 border ${
+          isLightMode
+            ? 'bg-white border-neutral-200 text-neutral-900'
+            : 'bg-neutral-900 border-neutral-800 text-neutral-100'
+        }`}
         style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-400">
+        <div className={`flex items-center justify-between border-b pb-3 ${isLightMode ? 'border-neutral-200' : 'border-neutral-800'}`}>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-500">
               <Lightbulb className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Предложения сверх контракта</h2>
-              <p className="text-xs text-neutral-400">Идеи расширения механики и данных (Раздел 9 ТЗ)</p>
+              <h2 className="text-base font-bold">Предложения сверх контракта</h2>
+              <p className={`text-[13px] ${isLightMode ? 'text-neutral-600' : 'text-neutral-400'}`}>
+                Идеи расширения механики и данных (Раздел 9 ТЗ)
+              </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
+            className={`p-2 rounded-full transition-colors ${
+              isLightMode ? 'hover:bg-neutral-100 text-neutral-500 hover:text-black' : 'hover:bg-neutral-800 text-neutral-400 hover:text-white'
+            }`}
             aria-label="Закрыть"
           >
             <X className="w-5 h-5" />
@@ -95,29 +104,37 @@ export const ProposalsModal: React.FC<ProposalsModalProps> = ({ isOpen, onClose 
         </div>
 
         {/* Proposals list */}
-        <div className="space-y-4 text-xs">
+        <div className="space-y-4 text-[13px]">
           {PROPOSALS.map((prop) => {
             const Icon = prop.icon;
             return (
               <div
                 key={prop.id}
-                className="p-4 rounded-2xl bg-neutral-950/70 border border-neutral-800 space-y-2"
+                className={`p-4 rounded-2xl border space-y-2.5 ${
+                  isLightMode ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-950/70 border-neutral-800'
+                }`}
               >
-                <div className="flex items-center gap-2 text-sm font-bold text-amber-400">
+                <div className="flex items-center gap-2 text-[15px] font-bold text-amber-500">
                   <Icon className="w-4 h-4 shrink-0" />
                   <span>{prop.title}</span>
                 </div>
 
-                <p className="text-neutral-300 leading-relaxed">{prop.why}</p>
+                <p className={`leading-relaxed ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}`}>
+                  {prop.why}
+                </p>
 
-                <div className="pt-1.5 space-y-1 font-mono text-[11px] bg-neutral-900 p-2.5 rounded-xl border border-neutral-800/80 text-neutral-400">
+                <div className={`pt-2 space-y-1.5 font-mono text-[13px] p-3 rounded-xl border ${
+                  isLightMode
+                    ? 'bg-white border-neutral-300 text-neutral-800'
+                    : 'bg-neutral-900 border-neutral-800/80 text-neutral-300'
+                }`}>
                   <div>
-                    <strong className="text-neutral-300">Поле вида:</strong>{' '}
-                    <span className="text-emerald-400">{prop.contractChanges.viewField}</span>
+                    <strong className={isLightMode ? 'text-neutral-900' : 'text-white'}>Поле вида:</strong>{' '}
+                    <span className="text-emerald-500 font-semibold">{prop.contractChanges.viewField}</span>
                   </div>
                   <div>
-                    <strong className="text-neutral-300">Команда:</strong>{' '}
-                    <span className="text-cyan-400">{prop.contractChanges.command}</span>
+                    <strong className={isLightMode ? 'text-neutral-900' : 'text-white'}>Команда:</strong>{' '}
+                    <span className="text-cyan-500 font-semibold">{prop.contractChanges.command}</span>
                   </div>
                 </div>
               </div>

@@ -11,9 +11,10 @@ interface TeamBadgeProps {
   format: GuesserFormat;
   myTeam?: TeamScore;
   nickname: string;
+  isLightMode?: boolean;
 }
 
-export const TeamBadge: React.FC<TeamBadgeProps> = ({ format, myTeam, nickname }) => {
+export const TeamBadge: React.FC<TeamBadgeProps> = ({ format, myTeam, nickname, isLightMode = false }) => {
   let label = STRINGS.progress.teamSolo;
   let color = '#3B82F6';
 
@@ -28,20 +29,22 @@ export const TeamBadge: React.FC<TeamBadgeProps> = ({ format, myTeam, nickname }
     color = myTeam?.color || '#A855F7';
   }
 
+  const isYellow = color.toLowerCase() === '#eab308';
+
   return (
     <div
-      className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-wide border shadow-xs transition-colors"
+      className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[13px] font-bold tracking-wide border shadow-sm transition-colors"
       style={{
-        backgroundColor: `${color}18`,
-        borderColor: `${color}40`,
-        color: '#F9FAFB',
+        backgroundColor: isLightMode ? `${color}25` : `${color}30`,
+        borderColor: `${color}60`,
+        color: isLightMode ? (isYellow ? '#713F12' : '#0F172A') : '#FFFFFF',
       }}
     >
       <span
-        className="w-2.5 h-2.5 rounded-full shadow-xs shrink-0"
+        className="w-3 h-3 rounded-full shadow-sm shrink-0"
         style={{ backgroundColor: color }}
       />
-      <span className="truncate max-w-[200px]">{label}</span>
+      <span className="truncate max-w-[220px]">{label}</span>
     </div>
   );
 };

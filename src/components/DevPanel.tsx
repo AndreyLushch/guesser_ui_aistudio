@@ -11,19 +11,17 @@ import {
   Layers,
   Lightbulb,
   Play,
-  RotateCcw,
   Smartphone,
   Sun,
   Moon,
-  Volume2,
-  VolumeX,
   Users,
-  Eye,
   AlertTriangle,
+  Palette,
 } from 'lucide-react';
 import { GuesserPlayerView } from '../types';
 import { FIXTURES, FixtureMeta } from '../fixtures';
 import { MockAdapter } from '../api/MockAdapter';
+import { VisualStyle } from '../theme/tokens';
 
 interface DevPanelProps {
   currentView: GuesserPlayerView;
@@ -37,6 +35,8 @@ interface DevPanelProps {
   onToggleTheme: () => void;
   onOpenArchitectureGuide: () => void;
   onOpenProposals: () => void;
+  visualStyle: VisualStyle;
+  onSelectVisualStyle: (style: VisualStyle) => void;
 }
 
 export const DevPanel: React.FC<DevPanelProps> = ({
@@ -51,9 +51,10 @@ export const DevPanel: React.FC<DevPanelProps> = ({
   onToggleTheme,
   onOpenArchitectureGuide,
   onOpenProposals,
+  visualStyle,
+  onSelectVisualStyle,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Switch perspective in live mock
   const handlePerspectiveChange = (perspective: 'host' | 'speaker' | 'teammate' | 'opponent') => {
@@ -90,47 +91,87 @@ export const DevPanel: React.FC<DevPanelProps> = ({
       <div className="pointer-events-auto">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="mb-2 px-3.5 py-1.5 rounded-full bg-neutral-900/95 hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-700/80 shadow-2xl flex items-center gap-2 text-xs font-semibold backdrop-blur-md transition-all active:scale-95"
+          className="mb-2 px-4 py-2 rounded-full bg-neutral-900/95 hover:bg-neutral-800 text-white border border-neutral-700/80 shadow-2xl flex items-center gap-2 text-[13px] font-bold backdrop-blur-md transition-all active:scale-95 cursor-pointer"
         >
-          <Wrench className="w-3.5 h-3.5 text-amber-400" />
+          <Wrench className="w-4 h-4 text-rose-400" />
           <span>DevPanel</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-neutral-800 text-amber-300 font-mono">
+          <span className="text-[13px] px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-mono font-bold">
             {isLiveMock ? 'Live Mock' : 'Fixture'}
           </span>
-          {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+          {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
         </button>
       </div>
 
       {/* Expanded bottom sheet */}
       {isOpen && (
         <div
-          className="pointer-events-auto w-full max-w-lg bg-neutral-950/95 border-t border-neutral-800 rounded-t-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl text-neutral-200 space-y-3.5 max-h-[75vh] overflow-y-auto"
-          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+          className="pointer-events-auto w-full max-w-lg bg-neutral-950/95 dark:bg-neutral-950/95 border-t border-neutral-800 rounded-t-3xl p-4 sm:p-5 shadow-2xl backdrop-blur-xl text-neutral-100 space-y-3.5 max-h-[75vh] overflow-y-auto"
+          style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {/* Header row */}
-          <div className="flex items-center justify-between border-b border-neutral-800/80 pb-2.5">
+          <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-black uppercase tracking-wider text-neutral-200">
-                Панель управления тестированием
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[13px] font-black uppercase tracking-wider text-white">
+                Панель тестирования
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={onOpenArchitectureGuide}
-                className="px-2.5 py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-[13px] font-black flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Layers className="w-3.5 h-3.5" />
+                <Layers className="w-4 h-4" />
                 <span>Карта экранов</span>
               </button>
 
               <button
                 onClick={onOpenProposals}
-                className="px-2.5 py-1 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-[13px] font-black flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Lightbulb className="w-3.5 h-3.5" />
+                <Lightbulb className="w-4 h-4" />
                 <span>Предложения</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Requirement 1: 3 Visual Styles Switcher */}
+          <div className="space-y-1.5 p-3 rounded-2xl bg-neutral-900 border border-neutral-800">
+            <div className="flex items-center gap-1.5 text-[13px] font-black text-rose-400">
+              <Palette className="w-4 h-4" />
+              <span>Стиль оформления (3 варианта):</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              <button
+                onClick={() => onSelectVisualStyle('fiesta')}
+                className={`py-2 px-2 rounded-xl text-[13px] font-black border transition-all cursor-pointer ${
+                  visualStyle === 'fiesta'
+                    ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white border-white shadow-md'
+                    : 'bg-neutral-800 text-neutral-300 border-neutral-700 hover:text-white'
+                }`}
+              >
+                🎉 Fiesta
+              </button>
+              <button
+                onClick={() => onSelectVisualStyle('arcade')}
+                className={`py-2 px-2 rounded-xl text-[13px] font-black border-2 transition-all cursor-pointer ${
+                  visualStyle === 'arcade'
+                    ? 'bg-amber-400 text-neutral-950 border-white shadow-[2px_2px_0px_#FFFFFF]'
+                    : 'bg-neutral-800 text-neutral-300 border-neutral-700 hover:text-white'
+                }`}
+              >
+                🕹️ Arcade
+              </button>
+              <button
+                onClick={() => onSelectVisualStyle('glass')}
+                className={`py-2 px-2 rounded-xl text-[13px] font-black border transition-all cursor-pointer ${
+                  visualStyle === 'glass'
+                    ? 'bg-white/20 backdrop-blur-md text-white border-cyan-400 shadow-md'
+                    : 'bg-neutral-800 text-neutral-300 border-neutral-700 hover:text-white'
+                }`}
+              >
+                ✨ Glass
               </button>
             </div>
           </div>
@@ -139,34 +180,34 @@ export const DevPanel: React.FC<DevPanelProps> = ({
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => onSwitchToLiveMock()}
-              className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+              className={`py-2.5 px-3 rounded-xl border text-[13px] font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 isLiveMock
-                  ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-sm'
+                  ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white border-rose-400 shadow-md'
                   : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-white'
               }`}
             >
-              <Play className="w-3.5 h-3.5 fill-current" />
+              <Play className="w-4 h-4 fill-current" />
               <span>Живая партия (Мок)</span>
             </button>
 
             <button
               onClick={() => onApplyFixture(FIXTURES[0])}
-              className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+              className={`py-2.5 px-3 rounded-xl border text-[13px] font-black flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 !isLiveMock
-                  ? 'bg-amber-400 text-neutral-950 border-amber-300 shadow-sm'
+                  ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white border-rose-400 shadow-md'
                   : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-white'
               }`}
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Режим фикстур (21 вид)</span>
+              <Layers className="w-4 h-4" />
+              <span>Режим фикстур ({FIXTURES.length})</span>
             </button>
           </div>
 
           {/* Quick Perspective Switcher */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs text-neutral-400">
-              <span className="font-semibold">Точка зрения (глазами кого):</span>
-              <span className="font-mono text-[11px] text-amber-400">
+            <div className="flex items-center justify-between text-[13px] text-neutral-400">
+              <span className="font-bold">Точка зрения (глазами кого):</span>
+              <span className="font-mono text-[13px] text-rose-400 font-bold truncate max-w-[190px]">
                 {currentView.me.nickname}{' '}
                 {currentView.me.isCurrentSpeaker
                   ? '· Объясняет'
@@ -176,13 +217,13 @@ export const DevPanel: React.FC<DevPanelProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-4 gap-2">
               <button
                 onClick={() => handlePerspectiveChange('host')}
-                className={`py-1.5 rounded-xl border text-[11px] font-bold transition-all ${
+                className={`py-2 rounded-xl border text-[13px] font-bold transition-all cursor-pointer ${
                   currentView.me.isHost
-                    ? 'bg-neutral-800 border-amber-500 text-amber-300'
-                    : 'bg-neutral-900/80 border-neutral-800 text-neutral-400 hover:text-white'
+                    ? 'bg-rose-500/20 border-rose-500 text-rose-300'
+                    : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
                 }`}
               >
                 Ведущий
@@ -190,10 +231,10 @@ export const DevPanel: React.FC<DevPanelProps> = ({
 
               <button
                 onClick={() => handlePerspectiveChange('speaker')}
-                className={`py-1.5 rounded-xl border text-[11px] font-bold transition-all ${
+                className={`py-2 rounded-xl border text-[13px] font-bold transition-all cursor-pointer ${
                   currentView.me.isCurrentSpeaker
-                    ? 'bg-neutral-800 border-amber-500 text-amber-300'
-                    : 'bg-neutral-900/80 border-neutral-800 text-neutral-400 hover:text-white'
+                    ? 'bg-rose-500/20 border-rose-500 text-rose-300'
+                    : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
                 }`}
               >
                 Объясняющий
@@ -201,11 +242,11 @@ export const DevPanel: React.FC<DevPanelProps> = ({
 
               <button
                 onClick={() => handlePerspectiveChange('teammate')}
-                className={`py-1.5 rounded-xl border text-[11px] font-bold transition-all ${
+                className={`py-2 rounded-xl border text-[13px] font-bold transition-all cursor-pointer ${
                   !currentView.me.isCurrentSpeaker &&
                   currentView.me.teamId === currentView.currentTeamId
-                    ? 'bg-neutral-800 border-amber-500 text-amber-300'
-                    : 'bg-neutral-900/80 border-neutral-800 text-neutral-400 hover:text-white'
+                    ? 'bg-rose-500/20 border-rose-500 text-rose-300'
+                    : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
                 }`}
               >
                 Своя ком.
@@ -213,10 +254,10 @@ export const DevPanel: React.FC<DevPanelProps> = ({
 
               <button
                 onClick={() => handlePerspectiveChange('opponent')}
-                className={`py-1.5 rounded-xl border text-[11px] font-bold transition-all ${
+                className={`py-2 rounded-xl border text-[13px] font-bold transition-all cursor-pointer ${
                   currentView.me.teamId !== currentView.currentTeamId
-                    ? 'bg-neutral-800 border-amber-500 text-amber-300'
-                    : 'bg-neutral-900/80 border-neutral-800 text-neutral-400 hover:text-white'
+                    ? 'bg-rose-500/20 border-rose-500 text-rose-300'
+                    : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
                 }`}
               >
                 Соперник
@@ -226,7 +267,7 @@ export const DevPanel: React.FC<DevPanelProps> = ({
 
           {/* Fixture Selector dropdown */}
           <div className="space-y-1.5">
-            <label className="text-xs text-neutral-400 font-semibold block">
+            <label className="text-[13px] text-neutral-300 font-bold block">
               Быстрый выбор фикстуры ({FIXTURES.length} вариантов):
             </label>
             <select
@@ -235,7 +276,7 @@ export const DevPanel: React.FC<DevPanelProps> = ({
                 const target = FIXTURES.find((f) => f.id === e.target.value);
                 if (target) onApplyFixture(target);
               }}
-              className="w-full py-2 px-3 rounded-xl bg-neutral-900 border border-neutral-700 text-xs font-medium text-white focus:outline-hidden focus:border-amber-500"
+              className="w-full py-2.5 px-3 rounded-xl bg-neutral-900 border border-neutral-700 text-[13px] font-bold text-white focus:outline-hidden focus:border-rose-500"
             >
               {FIXTURES.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -246,34 +287,34 @@ export const DevPanel: React.FC<DevPanelProps> = ({
           </div>
 
           {/* Quick Party presets */}
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-800/60">
-            <div className="flex items-center gap-1 text-xs text-neutral-400">
-              <Users className="w-3.5 h-3.5" />
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-neutral-800">
+            <div className="flex items-center gap-1 text-[13px] text-neutral-400 font-bold">
+              <Users className="w-4 h-4" />
               <span>Формат:</span>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => onSwitchToLiveMock(2)}
-                className="px-2 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-[11px] font-semibold text-cyan-300 border border-cyan-800"
+                className="px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-[13px] font-bold text-cyan-300 border border-cyan-800 cursor-pointer"
               >
                 2 (Pair)
               </button>
               <button
                 onClick={() => onSwitchToLiveMock(3)}
-                className="px-2 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-[11px] font-semibold text-purple-300 border border-purple-800"
+                className="px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-[13px] font-bold text-purple-300 border border-purple-800 cursor-pointer"
               >
                 3 (Solo)
               </button>
               <button
                 onClick={() => onSwitchToLiveMock(6)}
-                className="px-2 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-[11px] font-semibold text-amber-300 border border-amber-800"
+                className="px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-[13px] font-bold text-amber-300 border border-amber-800 cursor-pointer"
               >
                 6 (Teams)
               </button>
               <button
                 onClick={() => onSwitchToLiveMock(30)}
-                className="px-2 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-[11px] font-semibold text-emerald-300 border border-emerald-800"
+                className="px-2.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-[13px] font-bold text-emerald-300 border border-emerald-800 cursor-pointer"
               >
                 30 (Max)
               </button>
@@ -281,40 +322,40 @@ export const DevPanel: React.FC<DevPanelProps> = ({
           </div>
 
           {/* Environment Toggles: Platform Header, Theme, Sound */}
-          <div className="grid grid-cols-3 gap-2 pt-1 border-t border-neutral-800/60">
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-neutral-800">
             {/* Platform 56px Header Stub Toggle */}
             <button
               onClick={onTogglePlatformHeader}
-              className={`py-2 px-2.5 rounded-xl border text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              className={`py-2 px-2.5 rounded-xl border text-[13px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                 showPlatformHeader
                   ? 'bg-neutral-800 border-neutral-500 text-white'
                   : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
               }`}
             >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Шапка 56px: {showPlatformHeader ? 'Вкл' : 'Выкл'}</span>
+              <Smartphone className="w-4 h-4" />
+              <span>Шапка: {showPlatformHeader ? 'Вкл' : 'Выкл'}</span>
             </button>
 
             {/* Dark/Light Theme Toggle */}
             <button
               onClick={onToggleTheme}
-              className={`py-2 px-2.5 rounded-xl border text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors ${
+              className={`py-2 px-2.5 rounded-xl border text-[13px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                 !isDarkTheme
-                  ? 'bg-neutral-200 border-neutral-300 text-neutral-900'
+                  ? 'bg-neutral-100 border-neutral-300 text-neutral-950 font-black'
                   : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
               }`}
             >
-              {isDarkTheme ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5 text-amber-500" />}
+              {isDarkTheme ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-500" />}
               <span>{isDarkTheme ? 'Тёмная' : 'Светлая'}</span>
             </button>
 
             {/* Offline toggle for active viewer */}
             <button
               onClick={handleToggleOfflineActivePlayer}
-              className="py-2 px-2.5 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 text-[11px] font-semibold flex items-center justify-center gap-1.5"
+              className="py-2 px-2.5 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-neutral-300 text-[13px] font-bold flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-              <span>Сеть (вкл/выкл)</span>
+              <AlertTriangle className="w-4 h-4 text-rose-400" />
+              <span>Сеть</span>
             </button>
           </div>
         </div>

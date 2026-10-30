@@ -32,34 +32,34 @@ export const VoteResultBanner: React.FC<VoteResultBannerProps> = ({ voteResult }
   return (
     <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm animate-in slide-in-from-top-4 duration-300">
       <div
-        className={`p-3.5 rounded-2xl border shadow-xl backdrop-blur-md flex items-center justify-between gap-3 ${
+        className={`p-4 rounded-3xl border shadow-2xl backdrop-blur-xl flex items-center justify-between gap-3 ${
           isApproved || isTie
-            ? 'bg-emerald-950/90 border-emerald-500/70 text-emerald-100'
-            : 'bg-red-950/90 border-red-500/70 text-red-100'
+            ? 'bg-emerald-600 text-white border-emerald-400 shadow-emerald-500/30'
+            : 'bg-rose-600 text-white border-rose-400 shadow-rose-500/30'
         }`}
       >
         <div className="flex items-center gap-3">
           <div
-            className={`p-2 rounded-xl shrink-0 ${
-              isApproved || isTie ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+            className={`p-2.5 rounded-2xl shrink-0 ${
+              isApproved || isTie ? 'bg-white/20 text-white' : 'bg-white/20 text-white'
             }`}
           >
             {isApproved ? (
-              <CheckCircle2 className="w-5 h-5" />
+              <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
             ) : isTie ? (
-              <Scale className="w-5 h-5" />
+              <Scale className="w-6 h-6 stroke-[2.5]" />
             ) : (
-              <XCircle className="w-5 h-5" />
+              <XCircle className="w-6 h-6 stroke-[2.5]" />
             )}
           </div>
           <div>
-            <div className="text-sm font-bold tracking-tight">{title}</div>
-            <div className="text-xs opacity-80 mt-0.5">
+            <div className="text-base font-black tracking-tight">{title}</div>
+            <div className="text-[13px] opacity-90 mt-0.5 font-medium">
               «{voteResult.wordText}» · {STRINGS.voteResult.scoreDetails(voteResult.votesFor, voteResult.votesAgainst)}
             </div>
           </div>
         </div>
-        <div className="text-xs font-mono font-bold px-2 py-1 rounded-md bg-black/40 shrink-0">
+        <div className="text-[13px] font-mono font-black px-2.5 py-1 rounded-xl bg-black/30 shrink-0">
           {voteResult.secondsLeft}с
         </div>
       </div>

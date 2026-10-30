@@ -21,12 +21,12 @@ export const SpeakerClaimBadge: React.FC<SpeakerClaimBadgeProps> = ({
   onCancel,
 }) => {
   return (
-    <div className="w-full bg-emerald-950/80 border border-emerald-500/50 rounded-2xl px-3.5 py-2 flex items-center justify-between gap-3 shadow-md backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="w-full bg-emerald-500/20 border border-emerald-400/60 rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 shadow-md backdrop-blur-md animate-in fade-in duration-200 text-white">
       <div className="flex items-center gap-2 min-w-0">
-        <span className="p-1 rounded-full bg-emerald-500/20 text-emerald-400 shrink-0">
-          <Check className="w-3.5 h-3.5" />
+        <span className="p-1 rounded-full bg-emerald-400 text-neutral-950 shrink-0">
+          <Check className="w-3.5 h-3.5 stroke-[3]" />
         </span>
-        <span className="text-xs font-semibold text-emerald-200 truncate">
+        <span className="text-[13px] font-black truncate text-emerald-100">
           {STRINGS.speakerClaim.claimed(wordText, secondsLeft)}
         </span>
       </div>
@@ -35,9 +35,9 @@ export const SpeakerClaimBadge: React.FC<SpeakerClaimBadgeProps> = ({
         <button
           onClick={onCancel}
           data-testid="guesser-speaker-claim-cancel"
-          className="px-2.5 py-1 rounded-lg bg-red-900/40 hover:bg-red-800/60 border border-red-500/40 text-red-300 text-xs font-medium flex items-center gap-1 transition-colors shrink-0"
+          className="px-3 py-1.5 rounded-xl bg-rose-600/80 hover:bg-rose-500 border border-rose-400 text-white text-[13px] font-bold flex items-center gap-1.5 transition-colors shrink-0 shadow-sm"
         >
-          <X className="w-3 h-3" />
+          <X className="w-3.5 h-3.5 stroke-[2.5]" />
           <span>{STRINGS.speakerClaim.cancelBtn}</span>
         </button>
       )}

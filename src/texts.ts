@@ -103,7 +103,7 @@ export const STRINGS = {
   // Dispute Window
   dispute: {
     teamGuessedWord: (teamName: string, word: string) => `${teamName} угадали: ${word}`,
-    playerGuessedWord: (playerName: string, word: string) => `${playerName} угадал: ${word}`,
+    playerGuessedWord: (playerName: string, word: string) => `Угадано: ${playerName} · ${word}`,
     cancelBtn: 'Отмена',
     pairNote: 'Отмена — слово не засчитается, без голосования',
     autoAcceptIn: (sec: number) => `Засчитается через ${sec} с`,

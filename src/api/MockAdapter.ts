@@ -74,6 +74,13 @@ interface MockInternalState {
   speakerClaim?: GuesserPlayerView['speakerClaim'];
   finishedSummary?: GuesserPlayerView['finishedSummary'];
   wordsGuessedThisTurn: number;
+  pendingClaim?: {
+    wordText: string;
+    teamId?: string;
+    guessedById?: string;
+    speakerId?: string;
+    format: GuesserFormat;
+  };
   // Which player is currently viewing
   activeViewerId: string;
 }
@@ -208,7 +215,8 @@ export class MockAdapter implements GameAdapter {
     if (this.state.disputeWindow && this.state.disputeWindow.secondsLeft > 0) {
       const nextSec = this.state.disputeWindow.secondsLeft - 1;
       if (nextSec <= 0) {
-        // Dispute window closed with no dispute raised -> word is approved!
+        // Dispute window closed with no dispute raised -> word is approved, award point now!
+        this.awardPendingClaimPoints();
         this.state.disputeWindow = undefined;
         // In step mode, advance to next turn
         if (this.state.mode === 'step' && this.state.phase === 'dispute_window') {
@@ -382,6 +390,25 @@ export class MockAdapter implements GameAdapter {
     this.notify();
   }
 
+  private awardPendingClaimPoints() {
+    if (!this.state.pendingClaim) return;
+    const { format, teamId, guessedById, speakerId } = this.state.pendingClaim;
+    if (format === 'solo') {
+      if (speakerId) {
+        const speakerTeam = this.state.teams.find((t) => t.soloPlayerId === speakerId);
+        if (speakerTeam) speakerTeam.score += 1;
+      }
+      if (guessedById) {
+        const guessedTeam = this.state.teams.find((t) => t.soloPlayerId === guessedById);
+        if (guessedTeam) guessedTeam.score += 1;
+      }
+    } else if (teamId) {
+      const team = this.state.teams.find((t) => t.id === teamId);
+      if (team) team.score += 1;
+    }
+    this.state.pendingClaim = undefined;
+  }
+
   private finalizeVoting() {
     if (!this.state.voting) return;
 
@@ -397,13 +424,12 @@ export class MockAdapter implements GameAdapter {
     };
 
     if (decision === 'approved' || decision === 'tie') {
-      // Award point to current team
-      if (this.state.currentTeamId) {
-        const team = this.state.teams.find((t) => t.id === this.state.currentTeamId);
-        if (team) team.score += 1;
-      }
+      // Award point only now after vote approval
+      this.awardPendingClaimPoints();
     } else {
-      // Rejected: under hard mode, award to next team
+      // Rejected: pending claim discarded
+      this.state.pendingClaim = undefined;
+      // Under hard mode, award point to next team
       if (this.state.scoreMode === 'hard' && this.state.currentTeamId) {
         const currentIdx = this.state.teams.findIndex((t) => t.id === this.state.currentTeamId);
         if (currentIdx !== -1 && this.state.teams.length > 1) {
@@ -562,21 +588,14 @@ export class MockAdapter implements GameAdapter {
         const wordGuessed = this.state.currentWordText || 'КОСМОНАВТ';
         this.state.wordsGuessedThisTurn += 1;
 
-        // If solo format: score both speaker and guessedBy player
-        if (this.state.format === 'solo') {
-          if (this.state.currentSpeakerId) {
-            const speakerTeam = this.state.teams.find((t) => t.soloPlayerId === this.state.currentSpeakerId);
-            if (speakerTeam) speakerTeam.score += 1;
-          }
-          if (cmd.guessedBy) {
-            const guessedTeam = this.state.teams.find((t) => t.soloPlayerId === cmd.guessedBy);
-            if (guessedTeam) guessedTeam.score += 1;
-          }
-        } else {
-          // Standard team / pair scoring: award point
-          const team = this.state.teams.find((t) => t.id === this.state.currentTeamId);
-          if (team) team.score += 1;
-        }
+        // Pending claim: Point is only awarded after confirmation (window timeout or vote approval)!
+        this.state.pendingClaim = {
+          wordText: wordGuessed,
+          teamId: this.state.currentTeamId,
+          guessedById: cmd.guessedBy,
+          speakerId: this.state.currentSpeakerId,
+          format: this.state.format,
+        };
 
         if (this.state.mode === 'sprint') {
           // Sprint: keep active_turn, show speakerClaim to speaker and disputeWindow to others
@@ -639,17 +658,12 @@ export class MockAdapter implements GameAdapter {
       case 'RAISE_DISPUTE': {
         const disputedWord = this.state.disputeWindow?.wordText || this.state.speakerClaim?.wordText || 'СЛОВО';
 
-        // Deduct previously credited point
-        if (this.state.currentTeamId) {
-          const team = this.state.teams.find((t) => t.id === this.state.currentTeamId);
-          if (team && team.score > 0) team.score -= 1;
-        }
-
         this.state.disputeWindow = undefined;
         this.state.speakerClaim = undefined;
 
         if (this.state.format === 'pair') {
-          // Pair: simply cancelled, no voting!
+          // Pair: simply cancelled, no voting! Pending claim discarded
+          this.state.pendingClaim = undefined;
           this.state.voteResult = {
             wordText: disputedWord,
             votesFor: 0,

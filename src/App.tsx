@@ -13,6 +13,7 @@ import { RulesSheet } from './components/RulesSheet';
 import { ScreenArchitectureGuide } from './components/ScreenArchitectureGuide';
 import { ProposalsModal } from './components/ProposalsModal';
 import { DevPanel } from './components/DevPanel';
+import { VisualStyle } from './theme/tokens';
 
 // Screens
 import { LobbyScreen } from './screens/LobbyScreen';
@@ -31,6 +32,9 @@ export default function App() {
   const [currentView, setCurrentView] = useState<GuesserPlayerView>(() => mockAdapter.getView());
   const [isLiveMock, setIsLiveMock] = useState<boolean>(true);
 
+  // Visual style: fiesta (default), arcade, glass (Requirement 1)
+  const [visualStyle, setVisualStyle] = useState<VisualStyle>('fiesta');
+
   // Modals & Panels state
   const [isRulesOpen, setIsRulesOpen] = useState<boolean>(false);
   const [isArchitectureGuideOpen, setIsArchitectureGuideOpen] = useState<boolean>(false);
@@ -38,7 +42,9 @@ export default function App() {
 
   // Environment & theme state
   const [showPlatformHeader, setShowPlatformHeader] = useState<boolean>(true);
-  const [isDarkTheme, setIsDarkTheme] = useState<boolean>(true);
+  const [isDarkTheme, setIsDarkTheme] = useState<boolean>(false); // Requirement 4: True light theme by default
+
+  const isLightMode = !isDarkTheme;
 
   // Subscribe to live mock updates when live mode is active
   useEffect(() => {
@@ -88,13 +94,17 @@ export default function App() {
   return (
     <div
       className={`min-h-screen w-full flex flex-col items-center justify-start transition-colors duration-200 select-none ${
-        isDarkTheme ? 'bg-[#0a0a0d] text-neutral-100' : 'bg-neutral-100 text-neutral-900'
+        isLightMode ? 'bg-[#f1f3f9] text-neutral-900' : 'bg-[#0a0a0d] text-neutral-100'
       }`}
     >
       {/* Phone container frame: 320px - 430px */}
-      <div className="w-full max-w-[430px] min-h-screen flex flex-col relative shadow-2xl bg-neutral-950 border-x border-neutral-900/60 pb-16">
+      <div
+        className={`w-full max-w-[430px] min-h-screen flex flex-col relative shadow-2xl transition-colors duration-200 pb-16 border-x ${
+          isLightMode ? 'bg-white border-neutral-200/80 shadow-indigo-100/50' : 'bg-neutral-950 border-neutral-900/60 shadow-black'
+        }`}
+      >
         {/* Top ~56px platform area (stub toggleable in DevPanel) */}
-        <PlatformHeaderStub showPlaceholderBar={showPlatformHeader} />
+        <PlatformHeaderStub showPlaceholderBar={showPlatformHeader} isLightMode={isLightMode} />
 
         {/* Temporary Vote Result banner overlay (3s) */}
         <VoteResultBanner voteResult={currentView.voteResult} />
@@ -106,6 +116,8 @@ export default function App() {
               view={currentView}
               send={handleSend}
               onOpenRules={() => setIsRulesOpen(true)}
+              visualStyle={visualStyle}
+              isLightMode={isLightMode}
             />
           )}
 
@@ -114,6 +126,8 @@ export default function App() {
               view={currentView}
               send={handleSend}
               onOpenRules={() => setIsRulesOpen(true)}
+              visualStyle={visualStyle}
+              isLightMode={isLightMode}
             />
           )}
 
@@ -122,15 +136,31 @@ export default function App() {
               view={currentView}
               send={handleSend}
               onOpenRules={() => setIsRulesOpen(true)}
+              visualStyle={visualStyle}
+              isLightMode={isLightMode}
             />
           )}
 
+          {/* Requirement 7: In sprint mode, teammates and opponents must see the «Отмена» dispute window
+              whenever disputeWindow is active, even when phase === 'active_turn'. */}
           {currentView.phase === 'active_turn' && (
-            <ActiveTurnScreen
-              view={currentView}
-              send={handleSend}
-              onOpenRules={() => setIsRulesOpen(true)}
-            />
+            !currentView.me.isCurrentSpeaker && currentView.disputeWindow ? (
+              <DisputeWindowScreen
+                view={currentView}
+                send={handleSend}
+                onOpenRules={() => setIsRulesOpen(true)}
+                visualStyle={visualStyle}
+                isLightMode={isLightMode}
+              />
+            ) : (
+              <ActiveTurnScreen
+                view={currentView}
+                send={handleSend}
+                onOpenRules={() => setIsRulesOpen(true)}
+                visualStyle={visualStyle}
+                isLightMode={isLightMode}
+              />
+            )
           )}
 
           {currentView.phase === 'dispute_window' && (
@@ -138,6 +168,8 @@ export default function App() {
               view={currentView}
               send={handleSend}
               onOpenRules={() => setIsRulesOpen(true)}
+              visualStyle={visualStyle}
+              isLightMode={isLightMode}
             />
           )}
 
@@ -146,6 +178,8 @@ export default function App() {
               view={currentView}
               send={handleSend}
               onOpenRules={() => setIsRulesOpen(true)}
+              visualStyle={visualStyle}
+              isLightMode={isLightMode}
             />
           )}
 
@@ -154,6 +188,8 @@ export default function App() {
               view={currentView}
               send={handleSend}
               onOpenRules={() => setIsRulesOpen(true)}
+              visualStyle={visualStyle}
+              isLightMode={isLightMode}
             />
           )}
         </main>
@@ -165,6 +201,7 @@ export default function App() {
           format={currentView.format}
           mode={currentView.mode}
           scoreMode={currentView.scoreMode}
+          isLightMode={isLightMode}
         />
 
         {/* Screen Architecture Guide Matrix */}
@@ -173,12 +210,14 @@ export default function App() {
           onClose={() => setIsArchitectureGuideOpen(false)}
           onSelectFixture={handleApplyFixture}
           currentView={currentView}
+          isLightMode={isLightMode}
         />
 
         {/* Proposals Modal (Section 9) */}
         <ProposalsModal
           isOpen={isProposalsOpen}
           onClose={() => setIsProposalsOpen(false)}
+          isLightMode={isLightMode}
         />
 
         {/* Collapsible DevPanel */}
@@ -194,6 +233,8 @@ export default function App() {
           onToggleTheme={() => setIsDarkTheme(!isDarkTheme)}
           onOpenArchitectureGuide={() => setIsArchitectureGuideOpen(true)}
           onOpenProposals={() => setIsProposalsOpen(true)}
+          visualStyle={visualStyle}
+          onSelectVisualStyle={setVisualStyle}
         />
       </div>
     </div>

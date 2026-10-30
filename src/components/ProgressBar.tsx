@@ -11,6 +11,7 @@ interface ProgressBarProps {
   maxCircles: number;
   wordsLeft: number;
   totalWordsInitial: number;
+  isLightMode?: boolean;
 }
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({
@@ -18,6 +19,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   maxCircles,
   wordsLeft,
   totalWordsInitial,
+  isLightMode = false,
 }) => {
   const wordsProgressPercent = Math.min(
     100,
@@ -25,24 +27,30 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   );
 
   return (
-    <div className="w-full bg-neutral-900/80 backdrop-blur-md border border-neutral-800/80 rounded-2xl px-3.5 py-2 flex items-center justify-between shadow-xs">
+    <div
+      className={`w-full backdrop-blur-md rounded-2xl px-4 py-2.5 flex items-center justify-between border shadow-sm transition-colors ${
+        isLightMode
+          ? 'bg-white/95 border-neutral-200 text-neutral-800'
+          : 'bg-neutral-900/90 border-neutral-800 text-neutral-200'
+      }`}
+    >
       {/* Circle progress */}
       <div className="flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-        <span className="text-xs font-semibold tracking-wide text-neutral-300">
+        <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shadow-sm" />
+        <span className="text-[13px] font-bold tracking-wide">
           {STRINGS.progress.circle(currentCircle, maxCircles)}
         </span>
       </div>
 
       {/* Words deck progress */}
       <div className="flex items-center gap-2.5">
-        <div className="w-16 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+        <div className="w-18 h-2 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
           <div
             className="h-full bg-amber-500 transition-all duration-300 ease-out rounded-full"
             style={{ width: `${wordsProgressPercent}%` }}
           />
         </div>
-        <span className="text-xs font-medium text-neutral-400">
+        <span className="text-[13px] font-bold opacity-80 font-mono">
           {STRINGS.progress.words(wordsLeft, totalWordsInitial)}
         </span>
       </div>
